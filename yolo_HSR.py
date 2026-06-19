@@ -24,24 +24,28 @@ def list_frames(Pdir: Path):
 
 
 def assign_HSR(dets):
-    H = S = R = None
+    best = {
+        0: {"conf": -1, "pt": None},  # H
+        1: {"conf": -1, "pt": None},  # R
+        2: {"conf": -1, "pt": None},  # S
+    }
 
     for cls, conf, (x1, y1, x2, y2) in dets:
-        cx, cy = (x1 + x2) / 2, (y1 + y2) / 2
+        if cls not in best:
+            continue
 
-        if cls == 0:
-            H = (cx, cy)
-        elif cls == 1:
-            R = (cx, cy)
-        elif cls == 2:
-            S = (cx, cy)
-        else:
-            continue  # ignore other classes
+        if conf > best[cls]["conf"]:
+            cx, cy = (x1 + x2) / 2, (y1 + y2) / 2
+            best[cls] = {"conf": conf, "pt": (cx, cy)}
+
+    H = best[0]["pt"]
+    R = best[1]["pt"]
+    S = best[2]["pt"]
 
     return H, S, R
 
 
-def process_cartella(Pdir, model, out_csv_dir, out_overlay_dir,
+def process_folder(Pdir, model, out_csv_dir, out_overlay_dir,
                      conf_thr=0.25, overlay_every=2000):
     print(f"\nProcessing folder: {Pdir.name}")
     frames = list_frames(Pdir)
